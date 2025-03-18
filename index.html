@@ -13,8 +13,9 @@
 
 <body>
 
-    <canvas id=myCanvas width=1920 height=1080 style="background-color: pink"> </canvas>
+    <canvas id=myCanvas width=1500 height= 800 style="background-color: pink"> </canvas>
     <script>
+
         //viss kods būs šeit
     
         //vajag: Gravitācija, enerģijas nezūdamības likums, paātrinājums, koordinātes vienādojums, ROTĒJOŠS PAMATS
@@ -22,7 +23,7 @@
 
     //i have no idea what im doing
     var ctx = myCanvas.getContext("2d");
-
+/*
     // Draw a fill rectange, starting top left x and y, for a width and height
     ctx.fillRect(100, 100, 20, 10);
     ctx.fillStyle= "red";
@@ -107,6 +108,7 @@
              }
     }
     //-------------
+
     var y_pos = 0;
 
     function MyTimer () {
@@ -116,18 +118,32 @@
     }
 
     setInterval(MyTimer, 500);//TIME DELAY
+*/
     //------------------
     var y_pos = 0;
-    var MyImg = new Image();
-    MyImg.src = "https://s2js.com/img/etc/cat_grumpy.png";
+    var x_pos = 300;
+    var new_x = 50;
+    var new_y = 50;
+    var angle =0;
+    ctx.strokeStyle= "red";
+    ctx.lineWidth= 2;
+    //ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+    function MyTimer1 (MyEvent) {
 
-    function MyTimer1 () {
-        ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);//falling object ish
-        y_pos = y_pos + 1;
-        ctx.drawImage(MyImg, 130, y_pos);
+        ctx.clearRect(x_pos-1, y_pos-1, 52 ,52);//falling object ish
+            if (MyEvent.keyCode == 39) {x_pos = x_pos + 10;}   // right
+            if (MyEvent.keyCode == 40) {y_pos = y_pos + 10;}   // down
+            if (MyEvent.keyCode == 37) {x_pos = x_pos - 10;} 
+            //if (MyEvent.keyCode == 38) {y_pos = y_pos - 10;} 
+            if (MyEvent.keyCode == 38) {
+               ctx.rotate(angle)//????????????????????????????????????
+               angle +=10;
+            }
+        ctx.strokeRect(x_pos, y_pos, 50, 50);
     }
 
-    setInterval(MyTimer, 40);
+
+    window.addEventListener("keydown", MyTimer1);
     </script>
 
 
