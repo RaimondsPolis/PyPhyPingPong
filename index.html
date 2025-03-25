@@ -5,7 +5,10 @@
     <meta charset="utf-8"/>
     <title>Physics pong</title>
     <style>
-
+        body {
+            margin: 0; /* Remove default margin */
+            overflow: hidden; /* Prevent scrolling */
+        }
     </style>
 </head>
 
@@ -13,8 +16,16 @@
 
 <body>
 
-    <canvas id=myCanvas width=1500 height= 800 style="background-color: pink"> </canvas>
+    <canvas id=myCanvas width=1500 height= 800 style="background-color: rgb(66, 41, 45)"> </canvas>
     <script>
+        function resizeCanvas() {
+            myCanvas.width = window.innerWidth;
+            myCanvas.height = window.innerHeight;
+        }
+
+        // Resize canvas on load and when window resizes
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
 
         //viss kods būs šeit
     
@@ -119,8 +130,12 @@
 
     setInterval(MyTimer, 500);//TIME DELAY
 */
-    //------------------
-    var y_pos = 0;
+    //-----------------
+    /*
+    KUSTĪBAS PROTOTIPS ---- SCRAPPED 
+
+
+    var y_pos = 300;
     var x_pos = 300;
     var new_x = 50;
     var new_y = 50;
@@ -134,7 +149,7 @@
             if (MyEvent.keyCode == 39) {x_pos = x_pos + 10;}   // right
             if (MyEvent.keyCode == 40) {y_pos = y_pos + 10;}   // down
             if (MyEvent.keyCode == 37) {x_pos = x_pos - 10;} 
-            //if (MyEvent.keyCode == 38) {y_pos = y_pos - 10;} 
+            if (MyEvent.keyCode == 38) {y_pos = y_pos - 10;} 
             if (MyEvent.keyCode == 38) {
                ctx.rotate(angle)//????????????????????????????????????
                angle +=10;
@@ -144,6 +159,35 @@
 
 
     window.addEventListener("keydown", MyTimer1);
+
+*/  
+
+var start_x = innerWidth/2;
+var start_y = innerHeight*8/9;
+
+var x = start_x;
+var y = start_y;
+var platfrom_height = 25;
+var platform_width = 250;
+
+ctx.fillStyle = "white";
+ctx.fillRect(start_x-(platform_width/2), start_y-(platfrom_height/2),platform_width, platfrom_height); //platform
+
+
+
+    function MovePlatform(action){
+        ctx.clearRect(x-(platform_width/2), y-(platfrom_height/2)-1, platform_width, platfrom_height+1)
+
+            if (action.keyCode == 39) {x += 10;}   // right
+            if (action.keyCode == 37) {x -= 10;} 
+
+
+        ctx.fillRect(x-(platform_width/2), y-(platfrom_height/2),platform_width, platfrom_height);
+
+    }
+
+    window.addEventListener("keydown", MovePlatform)
+
     </script>
 
 
