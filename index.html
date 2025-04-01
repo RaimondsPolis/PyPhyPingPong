@@ -161,9 +161,33 @@
     window.addEventListener("keydown", MyTimer1);
 
 */  
+function fillCircle (x, y, radius, colour) {
+        ctx.beginPath();
+        ctx.fillStyle= colour;
+        ctx.arc(x, y, radius, 0, Math.PI * 2);// advanced FILL CIRCLE f(x)
+        ctx.fill();
+    };
 
-var start_x = innerWidth/2;
-var start_y = innerHeight*8/9;
+function acceleration(){
+    console.log("ir!")
+    ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+    yBall = yBall0+speed
+    speed+=speedChange;
+    yBall0=yBall
+    fillCircle(start_x, yBall, 30, "white")//ball
+    ctx.fillRect(x-(platform_width/2), y-(platfrom_height/2),platform_width, platfrom_height);//            !!!!!!!!!!!!!!!!!! UZTAISĪT COLIDING MECHANISM !!!!!!!!!!!!!!!!!!
+
+};
+setInterval(acceleration, 1)
+var yBall0 = 100;
+var speed =-1;
+var speedChange = 0.01;
+//var start_x = innerWidth/2;
+//var start_y = innerHeight*8/9;
+
+
+var start_x = 950;
+var start_y = 850;
 
 var x = start_x;
 var y = start_y;
@@ -172,17 +196,16 @@ var platform_width = 250;
 
 ctx.fillStyle = "white";
 ctx.fillRect(start_x-(platform_width/2), start_y-(platfrom_height/2),platform_width, platfrom_height); //platform
+fillCircle(start_x, start_y/2, 30, "white")//ball
 
 
 
     function MovePlatform(action){
-        ctx.clearRect(x-(platform_width/2), y-(platfrom_height/2)-1, platform_width, platfrom_height+1)
 
             if (action.keyCode == 39) {x += 10;}   // right
-            if (action.keyCode == 37) {x -= 10;} 
+            if (action.keyCode == 37) {x -= 10;} //left
 
 
-        ctx.fillRect(x-(platform_width/2), y-(platfrom_height/2),platform_width, platfrom_height);
 
     }
 
