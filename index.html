@@ -175,13 +175,33 @@ function acceleration(){
     speed+=speedChange;
     yBall0=yBall
     fillCircle(start_x, yBall, 30, "white")//ball
-    ctx.fillRect(x-(platform_width/2), y-(platfrom_height/2),platform_width, platfrom_height);//            !!!!!!!!!!!!!!!!!! UZTAISĪT COLIDING MECHANISM !!!!!!!!!!!!!!!!!!
+    //ctx.fillRect(x-(platform_width/2), y-(platfrom_height/2),platform_width, platfrom_height);//            !!!!!!!!!!!!!!!!!! UZTAISĪT COLIDING MECHANISM !!!!!!!!!!!!!!!!!!
+
+
+    // Draw rotated platform
+    ctx.save(); // Save current state
+    ctx.translate(x, y); // Translate to the center of platform
+    ctx.rotate(rotationAngle); // Apply rotation
+    ctx.fillStyle = "white";
+    ctx.fillRect(-platform_width/2, -platfrom_height/2, platform_width, platfrom_height); // Draw centered at origin
+    ctx.restore(); // Restore to previous state
+
+
+    if (yBall > start_y) {
+        speed = -1*speed; //bounces back
+        yBall0 = start_y;
+        speedChange = 0.03;
+        yBall = start_y+speed;  //bounces back
+        speed+=speedChange;         
+    }
+
 
 };
 setInterval(acceleration, 1)
 var yBall0 = 100;
 var speed =-1;
-var speedChange = 0.01;
+var speedChange = 0.03;
+var rotationAngle = 0;
 //var start_x = innerWidth/2;
 //var start_y = innerHeight*8/9;
 
@@ -195,8 +215,8 @@ var platfrom_height = 25;
 var platform_width = 250;
 
 ctx.fillStyle = "white";
-ctx.fillRect(start_x-(platform_width/2), start_y-(platfrom_height/2),platform_width, platfrom_height); //platform
-fillCircle(start_x, start_y/2, 30, "white")//ball
+//ctx.fillRect(start_x-(platform_width/2), start_y-(platfrom_height/2),platform_width, platfrom_height); //platform
+//fillCircle(start_x, start_y/2, 30, "white")//ball
 
 
 
@@ -204,13 +224,17 @@ fillCircle(start_x, start_y/2, 30, "white")//ball
 
             if (action.keyCode == 39) {x += 10;}   // right
             if (action.keyCode == 37) {x -= 10;} //left
-
+            if (action.keyCode == 40) {
+                rotationAngle += Math.PI/36; // Rotate 5 degrees clockwise (in radians)
+            }
+            if (action.keyCode == 38) {
+                rotationAngle -= Math.PI/36; // Rotate 5 degrees counter-clockwise (in radians)
+            }
 
 
     }
 
-    window.addEventListener("keydown", MovePlatform)
-
+    window.addEventListener("keydown", MovePlatform);
     </script>
 
 
