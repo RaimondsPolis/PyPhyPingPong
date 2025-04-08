@@ -161,6 +161,8 @@
     window.addEventListener("keydown", MyTimer1);
 
 */  
+var rotationSpeed = 0; // Rotation speed (radians per frame)
+var horizontalSpeed = 0; // Horizontal speed of the platform
 function fillCircle (x, y, radius, colour) {
         ctx.beginPath();
         ctx.fillStyle= colour;
@@ -177,10 +179,12 @@ function acceleration(){
     fillCircle(start_x, yBall, 30, "white")//ball
     //ctx.fillRect(x-(platform_width/2), y-(platfrom_height/2),platform_width, platfrom_height);//            !!!!!!!!!!!!!!!!!! UZTAISĪT COLIDING MECHANISM !!!!!!!!!!!!!!!!!!
 
+    x += horizontalSpeed; // Increment platform position by horizontal speed
 
     // Draw rotated platform
     ctx.save(); // Save current state
     ctx.translate(x, y); // Translate to the center of platform
+    rotationAngle += rotationSpeed; // Increment rotation angle
     ctx.rotate(rotationAngle); // Apply rotation
     ctx.fillStyle = "white";
     ctx.fillRect(-platform_width/2, -platfrom_height/2, platform_width, platfrom_height); // Draw centered at origin
@@ -188,11 +192,8 @@ function acceleration(){
 
 
     if (yBall > start_y) {
+        speed-=speedChange;
         speed = -1*speed; //bounces back
-        yBall0 = start_y;
-        speedChange = 0.03;
-        yBall = start_y+speed;  //bounces back
-        speed+=speedChange;         
     }
 
 
@@ -222,19 +223,35 @@ ctx.fillStyle = "white";
 
     function MovePlatform(action){
 
-            if (action.keyCode == 39) {x += 10;}   // right
-            if (action.keyCode == 37) {x -= 10;} //left
+            // if (action.keyCode == 39) {x += 10;}   // right
+            // if (action.keyCode == 37) {x -= 10;} //left
+
+            if (action.keyCode == 39) {
+                horizontalSpeed = 2; // Move right
+            }
+            if (action.keyCode == 37) {
+                horizontalSpeed = -2; // Move left
+            }
+
             if (action.keyCode == 40) {
-                rotationAngle += Math.PI/36; // Rotate 5 degrees clockwise (in radians)
+                rotationSpeed = Math.PI / 360; // Rotate clockwise (1 degree per frame)
             }
             if (action.keyCode == 38) {
-                rotationAngle -= Math.PI/36; // Rotate 5 degrees counter-clockwise (in radians)
+                rotationSpeed = -Math.PI / 360; // Rotate counter-clockwise (1 degree per frame)
             }
 
 
     }
-
+    function StopRotation(action) {
+        if (action.keyCode == 39 || action.keyCode == 37) {
+        horizontalSpeed = 0; // Stop horizontal movement
+    }
+        if (action.keyCode == 38 || action.keyCode == 40) {
+            rotationSpeed = 0; // Stop rotation
+        }
+    }
     window.addEventListener("keydown", MovePlatform);
+    window.addEventListener("keyup", StopRotation);
     </script>
 
 
