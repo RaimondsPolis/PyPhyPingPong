@@ -204,19 +204,44 @@ function rectCircleCollision(rect, circle) {
 //-------------------------------------
 
 
+// ...existing code...
 
-function acceleration(){
-    console.log("ir!")
+function bounceOffPlatform(ball, platformAngle, bounce = 1) {
+    const velocity = { x: ball.vx, y: ball.vy };
+
+    // Calculate the normal vector of the platform
+    const normal = {
+        x: Math.sin(platformAngle),
+        y: -Math.cos(platformAngle)
+    };
+
+    // Calculate the dot product of the velocity and the normal
+    const dot = velocity.x * normal.x + velocity.y * normal.y;
+
+    // Reflect the velocity vector
+    const reflected = {
+        x: velocity.x - 2 * dot * normal.x,
+        y: velocity.y - 2 * dot * normal.y
+    };
+
+    // Apply the bounce factor
+    ball.vx = reflected.x * bounce;
+    ball.vy = reflected.y * bounce;
+}
+
+function acceleration() {
+    console.log("ir!");
     ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
-    yBall = yBall0+speed
-    speed+=speedChange;
-    yBall0=yBall
-    fillCircle(start_x, yBall, 30, "white")//ball
-    //ctx.fillRect(x-(platform_width/2), y-(platfrom_height/2),platform_width, platfrom_height);//            !!!!!!!!!!!!!!!!!! UZTAISĪT COLIDING MECHANISM !!!!!!!!!!!!!!!!!!
 
-    x += horizontalSpeed; // Increment platform position by horizontal speed
+    // Update ball position
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.vy += speedChange; // Gravity effect
 
-//--------------------------------------
+    fillCircle(ball.x, ball.y, ball.radius, "white"); // Draw ball
+
+    // Update platform position
+    x += horizontalSpeed;
 
     // Platform properties
     const platform = {
@@ -227,91 +252,78 @@ function acceleration(){
         angle: rotationAngle
     };
 
-    // Ball properties
-    const ball = {
-        x: start_x,
-        y: yBall,
-        radius: 30
-    };
-
     // Check for collision
     if (rectCircleCollision(platform, ball)) {
         console.log("Collision detected!");
-        speed = -Math.abs(speed); // Reverse ball direction on collision
+        bounceOffPlatform(ball, platform.angle, 1); // Adjust ball velocity based on platform angle
     }
 
-//---------------------------------------
     // Draw rotated platform
-    ctx.save(); // Save current state
-    ctx.translate(x, y); // Translate to the center of platform
-    rotationAngle += rotationSpeed; // Increment rotation angle
-    ctx.rotate(rotationAngle); // Apply rotation
+    ctx.save();
+    ctx.translate(x, y);
+    rotationAngle += rotationSpeed;
+    ctx.rotate(rotationAngle);
     ctx.fillStyle = "white";
-    ctx.fillRect(-platform_width/2, -platfrom_height/2, platform_width, platfrom_height); // Draw centered at origin
-    ctx.restore(); // Restore to previous state
+    ctx.fillRect(-platform_width / 2, -platfrom_height / 2, platform_width, platfrom_height);
+    ctx.restore();
 
+    // Ball bounce logic for screen edges
+    if (ball.y + ball.radius > myCanvas.height || ball.y - ball.radius < 0) {
+        ball.vy = -ball.vy; // Reverse vertical velocity
+    }
+    if (ball.x + ball.radius > myCanvas.width || ball.x - ball.radius < 0) {
+        ball.vx = -ball.vx; // Reverse horizontal velocity
+    }
+}
 
-    // if (yBall > start_y) {
-    //     speed-=speedChange;
-    //     speed = -1*speed; //bounces back
-    // }
+setInterval(acceleration, 1);
 
-
+// Ball properties
+const ball = {
+    x: 950,
+    y: 100,
+    vx: 0, // Initial horizontal velocity
+    vy: 0, // Initial vertical velocity
+    radius: 30
 };
-setInterval(acceleration, 1)
-var yBall0 = 100;
-var speed =-1;
-var speedChange = 0.03;
+
+// Platform properties
 var rotationAngle = 0;
-//var start_x = innerWidth/2;
-//var start_y = innerHeight*8/9;
-
-
-var start_x = 950;
-var start_y = 850;
-
-var x = start_x;
-var y = start_y;
+var rotationSpeed = 0;
+var horizontalSpeed = 0;
 var platfrom_height = 25;
 var platform_width = 250;
+var x = 950;
+var y = 850;
+var speedChange = 0.03;
 
-ctx.fillStyle = "white";
-//ctx.fillRect(start_x-(platform_width/2), start_y-(platfrom_height/2),platform_width, platfrom_height); //platform
-//fillCircle(start_x, start_y/2, 30, "white")//ball
-
-
-
-    function MovePlatform(action){
-
-            // if (action.keyCode == 39) {x += 10;}   // right
-            // if (action.keyCode == 37) {x -= 10;} //left
-
-            if (action.keyCode == 39) {
-                horizontalSpeed = 2; // Move right
-            }
-            if (action.keyCode == 37) {
-                horizontalSpeed = -2; // Move left
-            }
-
-            if (action.keyCode == 40) {
-                rotationSpeed = Math.PI / 360; // Rotate clockwise (1 degree per frame)
-            }
-            if (action.keyCode == 38) {
-                rotationSpeed = -Math.PI / 360; // Rotate counter-clockwise (1 degree per frame)
-            }
-
-
+// Event listeners for platform movement
+function MovePlatform(action) {
+    if (action.keyCode == 39) {
+        horizontalSpeed = 2; // Move right
     }
-    function StopRotation(action) {
-        if (action.keyCode == 39 || action.keyCode == 37) {
+    if (action.keyCode == 37) {
+        horizontalSpeed = -2; // Move left
+    }
+    if (action.keyCode == 40) {
+        rotationSpeed = Math.PI / 360; // Rotate clockwise
+    }
+    if (action.keyCode == 38) {
+        rotationSpeed = -Math.PI / 360; // Rotate counter-clockwise
+    }
+}
+
+function StopRotation(action) {
+    if (action.keyCode == 39 || action.keyCode == 37) {
         horizontalSpeed = 0; // Stop horizontal movement
     }
-        if (action.keyCode == 38 || action.keyCode == 40) {
-            rotationSpeed = 0; // Stop rotation
-        }
+    if (action.keyCode == 38 || action.keyCode == 40) {
+        rotationSpeed = 0; // Stop rotation
     }
-    window.addEventListener("keydown", MovePlatform);
-    window.addEventListener("keyup", StopRotation);
+}
+
+window.addEventListener("keydown", MovePlatform);
+window.addEventListener("keyup", StopRotation);
     </script>
 
 
