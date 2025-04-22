@@ -1,321 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8"/>
-    <title>Physics pong</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Ping Pong</title>
     <style>
         body {
-            margin: 0; /* Remove default margin */
-            overflow: hidden; /* Prevent scrolling */
+            margin: 0;
+            overflow: hidden;
+            background-color: rgb(66, 41, 45);
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        button {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            font-size: 1.5rem;
+            color: white;
+            background-color: rgb(100, 50, 50);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: rgb(120, 60, 60);
         }
     </style>
 </head>
 
-<!---------------------------------------------------------------------------------------------------------------------------------------------------------------->
-
 <body>
+    <canvas id="myCanvas"></canvas>
+    <button onclick="startGame()">Start Game</button>
 
-    <canvas id=myCanvas width=1500 height= 800 style="background-color: rgb(66, 41, 45)"> </canvas>
     <script>
-        function resizeCanvas() {
-            myCanvas.width = window.innerWidth;
-            myCanvas.height = window.innerHeight;
-        }
+        const canvas = document.getElementById("myCanvas");
+        const ctx = canvas.getContext("2d");
 
-        // Resize canvas on load and when window resizes
+        // Resize canvas dynamically
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
         window.addEventListener("resize", resizeCanvas);
         resizeCanvas();
 
-        //viss kods būs šeit
-    
-        //vajag: Gravitācija, enerģijas nezūdamības likums, paātrinājums, koordinātes vienādojums, ROTĒJOŠS PAMATS
-  
+        // Ball properties
+        const ball = {
+            x: canvas.width / 2,
+            y: canvas.height / 4,
+            vx: 5, // Initial horizontal velocity
+            vy: 3, // Initial vertical velocity
+            radius: 30,
+            color: "white"
+        };
 
-    //i have no idea what im doing
-    var ctx = myCanvas.getContext("2d");
-/*
-    // Draw a fill rectange, starting top left x and y, for a width and height
-    ctx.fillRect(100, 100, 20, 10);
-    ctx.fillStyle= "red";
-    ctx.fillRect(90, 90, 10, 50);
-    ctx.fillStyle= "white";
-    ctx.fillRect(80, 80, 50, 10)
+        const gravity = 0.3; // Gravity acceleration
+        const bounceFactor = 1; // Preserve energy after bounce
 
-   
-    ctx.lineWidth=4;//thickness of the line
-    ctx.strokeStyle= "red"; //color of the line
-    ctx.strokeRect(50, 50, 20, 40); //draws the outline of the shape
+        // Text properties
+        const text = {
+            content: "PHYSICS PING PONG",
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            fontSize: 60,
+            color: "white"
+        };
 
-    //-------------
-    ctx.fillStyle= "green";
-    ctx.strokeStyle= "red";
-    ctx.lineWidth= 4;        //the following draws a green rectangle with a red outline
-
-    ctx.fillRect(200, 50, 70, 90);
-    ctx.strokeRect(200, 50, 70, 90);
-    //--------------
-    ctx.fillStyle="yellow";//šis pats strādā tekstam
-    ctx.strokeStyle="black";//šis pats strādā tekstam
-    ctx.lineWidth = 2; //šis pats strādā arī teksta outlineam
-    ctx.font= "60px Arial"; // FONT AND SIZE of the text
-    ctx.fillText("Hello", 10, 50); // TEXT CONTENT AND X, Y POSITION
-    ctx.strokeText("Goodbye", 10, 110);// TEXT CONENT OUTLINE AND X, Y POSITION
-    //--------------
-    ctx.beginPath();                         // Start drawing something
-    ctx.arc(150, 150, 100, 0, Math.PI*2);   // Make it a circle (X, Y, NO KURIEnes, LĪDZ KURIENEI (!!!RADIĀNOS!!!))
-    ctx.stroke();                            // Outline an outline
-    //--------------
-    //RECTANGLES ARE POSITIONED ON THE TOP LEFT OF THEIR GIVEN COORDINATE
-    //CIRCLES ARE POSITIONED ON THE CENTER OF THE GIVEN COORDINATE
-    //--------------
-    ctx.beginPath();
-    ctx.arc(200, 200, 25, 0, Math.PI * 2);
-    ctx.fillStyle= "green";
-    ctx.fill(); // lai iekrāsotu apli
-    //--------------
-    function fillCircle (x, y, radius, colour) {
-        ctx.beginPath();
-        ctx.fillStyle= colour;
-        ctx.arc(x, y, radius, 0, Math.PI * 2);// advanced FILL CIRCLE f(x)
-        ctx.fill();
-    }
-    //-----------------
-        var corner= 0;
-        var size = 0;
-        while (corner < 500) {
-            ctx.strokeRect(corner, corner, size, size);//WHILE LOOP PIEMĒRS
-            corner= corner + 5;
-            size +=10;
+        // Draw the ball
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = ball.color;
+            ctx.fill();
+            ctx.closePath();
         }
-        ctx.fillRect(corner, corner, 50, 50);
-    //-------------
-    for (var corner= 0; corner < 100; corner= corner+1) { //FOR LOOP PIEMĒRS
-        ctx.strokeRect(corner, corner, 50, 50);
-    }
-    //-------------
-    var thing = Math.random(); //returno random skaitli no 0(ieskaitot) līdz 1(neieskaitot)
-    //-------------
-    var thing = Math.floor(Math.random() * 20); // returno random INTIGER(veselu skaitli) no 1 - 19 ieskaitot
-    //---------------
-    function RandInt(up_to) { 
-        n = Math.floor(Math.random() * up_to);  //returno random intiger līdz dortajam skaitlim
-        return(n);  
-   } 
 
-   fillCircle(RandInt(myCanvas.width), RandInt(myCanvas.height), RandInt(30), "red"); // draw circle in random place with random size
-   // myCanvas.height ir no canvas id 16. rindiņā (id="myCanvas")un height/ width vnk izvēlas kuru parametru mainīs
-   //--------------
-   function CircleRandColour (x, y, radius) {
-  r = RandInt(3);   // r will be 0, 1 or 2
-  if (r == 0) {
-             ctx.fillStyle = "red";
-             }
-  else if (r == 1) {
-             ctx.fillStyle= "green"; // RANDOM COLOR 
-             }
-  else if (r == 2) {
-             ctx.fillStyle= "blue";
-             }
-    }
-    //-------------
-
-    var y_pos = 0;
-
-    function MyTimer () {
-        //ctx.clearRect(0, 0, myCanvas.width, myCanvas.height); //CLEAR/GET RID OF ALL SHAPES
-        y_pos = y_pos + 4;
-        ctx.strokeRect(120, y_pos, 60, 60);//MAKING SPRITES MOVE N SHIT
-    }
-
-    setInterval(MyTimer, 500);//TIME DELAY
-*/
-    //-----------------
-    /*
-    KUSTĪBAS PROTOTIPS ---- SCRAPPED 
-
-
-    var y_pos = 300;
-    var x_pos = 300;
-    var new_x = 50;
-    var new_y = 50;
-    var angle =0;
-    ctx.strokeStyle= "red";
-    ctx.lineWidth= 2;
-    //ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
-    function MyTimer1 (MyEvent) {
-
-        ctx.clearRect(x_pos-1, y_pos-1, 52 ,52);//falling object ish
-            if (MyEvent.keyCode == 39) {x_pos = x_pos + 10;}   // right
-            if (MyEvent.keyCode == 40) {y_pos = y_pos + 10;}   // down
-            if (MyEvent.keyCode == 37) {x_pos = x_pos - 10;} 
-            if (MyEvent.keyCode == 38) {y_pos = y_pos - 10;} 
-            if (MyEvent.keyCode == 38) {
-               ctx.rotate(angle)//????????????????????????????????????
-               angle +=10;
-            }
-        ctx.strokeRect(x_pos, y_pos, 50, 50);
-    }
-
-
-    window.addEventListener("keydown", MyTimer1);
-
-*/  
-var rotationSpeed = 0; // Rotation speed (radians per frame)
-var horizontalSpeed = 0; // Horizontal speed of the platform
-function fillCircle (x, y, radius, colour) {
-        ctx.beginPath();
-        ctx.fillStyle= colour;
-        ctx.arc(x, y, radius, 0, Math.PI * 2);// advanced FILL CIRCLE f(x)
-        ctx.fill();
-    };
-
-//-------------------------------------
-// Collision detection between a rectangle and a circle
-function rotatePoint(px, py, cx, cy, angle) {
-    const dx = px - cx;
-    const dy = py - cy;
-    const cos = Math.cos(-angle);
-    const sin = Math.sin(-angle);
-    return {
-        x: dx * cos - dy * sin + cx,
-        y: dx * sin + dy * cos + cy
-    };
-}
-
-function clamp(val, min, max) {
-    return Math.max(min, Math.min(max, val));
-}
-
-function rectCircleCollision(rect, circle) {
-    const local = rotatePoint(circle.x, circle.y, rect.x, rect.y, rect.angle);
-    const hw = rect.width / 2;
-    const hh = rect.height / 2;
-
-    const closestX = clamp(local.x, rect.x - hw, rect.x + hw);
-    const closestY = clamp(local.y, rect.y - hh, rect.y + hh);
-
-    const dx = local.x - closestX;
-    const dy = local.y - closestY;
-
-    return (dx * dx + dy * dy) <= (circle.radius * circle.radius);
-}
-
-//-------------------------------------
-
-
-
-function acceleration(){
-    console.log("ir!")
-    ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
-    yBall = yBall0+speed
-    speed+=speedChange;
-    yBall0=yBall
-    fillCircle(start_x, yBall, 30, "white")//ball
-    //ctx.fillRect(x-(platform_width/2), y-(platfrom_height/2),platform_width, platfrom_height);//            !!!!!!!!!!!!!!!!!! UZTAISĪT COLIDING MECHANISM !!!!!!!!!!!!!!!!!!
-
-    x += horizontalSpeed; // Increment platform position by horizontal speed
-
-//--------------------------------------
-
-    // Platform properties
-    const platform = {
-        x: x,
-        y: y,
-        width: platform_width,
-        height: platfrom_height,
-        angle: rotationAngle
-    };
-
-    // Ball properties
-    const ball = {
-        x: start_x,
-        y: yBall,
-        radius: 30
-    };
-
-    // Check for collision
-    if (rectCircleCollision(platform, ball)) {
-        console.log("Collision detected!");
-        speed = -Math.abs(speed); // Reverse ball direction on collision
-    }
-
-//---------------------------------------
-    // Draw rotated platform
-    ctx.save(); // Save current state
-    ctx.translate(x, y); // Translate to the center of platform
-    rotationAngle += rotationSpeed; // Increment rotation angle
-    ctx.rotate(rotationAngle); // Apply rotation
-    ctx.fillStyle = "white";
-    ctx.fillRect(-platform_width/2, -platfrom_height/2, platform_width, platfrom_height); // Draw centered at origin
-    ctx.restore(); // Restore to previous state
-
-
-    // if (yBall > start_y) {
-    //     speed-=speedChange;
-    //     speed = -1*speed; //bounces back
-    // }
-
-
-};
-setInterval(acceleration, 1)
-var yBall0 = 100;
-var speed =-1;
-var speedChange = 0.03;
-var rotationAngle = 0;
-//var start_x = innerWidth/2;
-//var start_y = innerHeight*8/9;
-
-
-var start_x = 950;
-var start_y = 850;
-
-var x = start_x;
-var y = start_y;
-var platfrom_height = 25;
-var platform_width = 250;
-
-ctx.fillStyle = "white";
-//ctx.fillRect(start_x-(platform_width/2), start_y-(platfrom_height/2),platform_width, platfrom_height); //platform
-//fillCircle(start_x, start_y/2, 30, "white")//ball
-
-
-
-    function MovePlatform(action){
-
-            // if (action.keyCode == 39) {x += 10;}   // right
-            // if (action.keyCode == 37) {x -= 10;} //left
-
-            if (action.keyCode == 39) {
-                horizontalSpeed = 2; // Move right
-            }
-            if (action.keyCode == 37) {
-                horizontalSpeed = -2; // Move left
-            }
-
-            if (action.keyCode == 40) {
-                rotationSpeed = Math.PI / 360; // Rotate clockwise (1 degree per frame)
-            }
-            if (action.keyCode == 38) {
-                rotationSpeed = -Math.PI / 360; // Rotate counter-clockwise (1 degree per frame)
-            }
-
-
-    }
-    function StopRotation(action) {
-        if (action.keyCode == 39 || action.keyCode == 37) {
-        horizontalSpeed = 0; // Stop horizontal movement
-    }
-        if (action.keyCode == 38 || action.keyCode == 40) {
-            rotationSpeed = 0; // Stop rotation
+        // Draw the text
+        function drawText() {
+            ctx.font = `${text.fontSize}px Arial`;
+            ctx.fillStyle = text.color;
+            ctx.textAlign = "center";
+            ctx.fillText(text.content, text.x, text.y);
         }
-    }
-    window.addEventListener("keydown", MovePlatform);
-    window.addEventListener("keyup", StopRotation);
+
+        // Check for collision between the ball and the text
+        function checkCollisionWithText() {
+            ctx.font = `${text.fontSize}px Arial`;
+            const textWidth = ctx.measureText(text.content).width;
+            const textHeight = text.fontSize; // Approximation for text height
+
+            // Define the bounding box of the text
+            const textBox = {
+                x: text.x - textWidth / 2,
+                y: text.y - textHeight,
+                width: textWidth,
+                height: textHeight
+            };
+
+            // Check for collision (circle-rectangle collision)
+            const closestX = Math.max(textBox.x, Math.min(ball.x, textBox.x + textBox.width));
+            const closestY = Math.max(textBox.y, Math.min(ball.y, textBox.y + textBox.height));
+            const dx = ball.x - closestX;
+            const dy = ball.y - closestY;
+
+            if (dx * dx + dy * dy < ball.radius * ball.radius) {
+                // Collision detected, reverse ball velocity
+                if (ball.x < textBox.x || ball.x > textBox.x + textBox.width) {
+                    ball.vx = -ball.vx; // Reverse horizontal velocity
+                }
+                if (ball.y < textBox.y || ball.y > textBox.y + textBox.height) {
+                    ball.vy = -ball.vy; // Reverse vertical velocity
+                }
+            }
+        }
+
+        // Update ball position and physics
+        function updateBall() {
+            ball.vy += gravity; // Apply gravity
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            // Bounce off walls
+            if (ball.x + ball.radius > canvas.width) {
+                ball.x = canvas.width - ball.radius; // Prevent clipping through the right wall
+                ball.vx = -ball.vx; // Reverse horizontal velocity
+            }
+            if (ball.x - ball.radius < 0) {
+                ball.x = ball.radius; // Prevent clipping through the left wall
+                ball.vx = -ball.vx; // Reverse horizontal velocity
+            }
+            if (ball.y + ball.radius >= canvas.height) {
+                ball.y = canvas.height - ball.radius; // Prevent clipping through the floor
+                ball.vy = -ball.vy; // Reverse vertical velocity
+            }
+            if (ball.y - ball.radius <= 0) {
+                ball.y = ball.radius; // Prevent clipping through the ceiling
+                ball.vy = -ball.vy; // Reverse vertical velocity
+            }
+
+            // Check for collision with text
+            checkCollisionWithText();
+        }
+
+        // Animation loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+            updateBall(); // Update ball position and physics
+            drawText(); // Draw the text
+            drawBall(); // Draw the ball
+            requestAnimationFrame(animate); // Loop the animation
+        }
+
+        // Redirect to game.html
+        function startGame() {
+            window.location.href = "game.html";
+        }
+
+        animate(); // Start the animation
     </script>
-
-
-<!---------------------------------------------------------------------------------------------------------------------------------------------------------------->
 </body>
 
 </html>
