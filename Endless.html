@@ -201,11 +201,6 @@ function rectCircleCollision(rect, circle) {
     return (dx * dx + dy * dy) <= (circle.radius * circle.radius);
 }
 
-//-------------------------------------
-
-
-// ...existing code...
-
 function bounceOffPlatform(ball, platformAngle, bounce = 1) {
     const velocity = { x: ball.vx, y: ball.vy };
 

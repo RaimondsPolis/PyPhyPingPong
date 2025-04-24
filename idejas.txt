@@ -1,0 +1,6 @@
+IDEJAS:
+
+cup catcher gamemode (mēģini noķert krūzītē bumbu)
+
+target practice(uzrodas mērķis, bumbai jāpieskarās mērķim 10 sekunžu laikā lai dabūtu punktu)
+

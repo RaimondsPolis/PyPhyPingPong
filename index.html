@@ -39,7 +39,7 @@
 
 <body>
     <canvas id="myCanvas"></canvas>
-    <button onclick="startGame()">Start Game</button>
+    <button onclick="startGame()">Endless mode</button>
 
     <script>
         const canvas = document.getElementById("myCanvas");
@@ -63,8 +63,9 @@
             color: "white"
         };
 
-        const gravity = 0.3; // Gravity acceleration
+        const gravity = 0.5; // Gravity acceleration
         const bounceFactor = 1; // Preserve energy after bounce
+
 
         // Text properties
         const text = {
@@ -153,16 +154,20 @@
 
         // Animation loop
         function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the 
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.fillText("Game version: V1.0.0", 100, canvas.height-5);
             updateBall(); // Update ball position and physics
             drawText(); // Draw the text
             drawBall(); // Draw the ball
             requestAnimationFrame(animate); // Loop the animation
+            
         }
 
         // Redirect to game.html
         function startGame() {
-            window.location.href = "game.html";
+            window.location.href = "Endless.html";
         }
 
         animate(); // Start the animation

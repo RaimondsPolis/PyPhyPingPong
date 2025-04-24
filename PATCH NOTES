@@ -1,0 +1,5 @@
+V1.0.0
+
+    - Main menu screen created, displays game version in the corner
+    - Endless mode added
+        -bounce the ball endlessley, test out physics, find bugs and so on
