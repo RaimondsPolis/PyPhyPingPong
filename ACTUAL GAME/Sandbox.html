@@ -131,58 +131,10 @@ function acceleration() {
     ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
 
     // Update ball position
-    const steps = 5;
-for (let i = 0; i < steps; i++) {
-    ball.vy += speedChange / steps;
-    applyFriction()
-    ball.x += ball.vx / steps;
-    ball.y += ball.vy / steps;
-
-    // Check collisions at each substep
-    const platform = {
-        x: x,
-        y: y,
-        width: platform_width,
-        height: platfrom_height,
-        angle: rotationAngle
-    };
-    if (rectCircleCollision(platform, ball)) {
-        bounceOffPlatform(ball, platform.angle, 1);
-    }
-
-    if (target) {
-        const left = {
-            x: target.x - targetWidth / 2,
-            y: target.y - wallThickness,
-            width: wallThickness,
-            height: targetHeight
-        };
-        const right = {
-            x: target.x + targetWidth / 2 - wallThickness,
-            y: target.y - wallThickness,
-            width: wallThickness,
-            height: targetHeight
-        };
-        const bottom = {
-            x: target.x - targetWidth / 2,
-            y: target.y + targetHeight - wallThickness,
-            width: targetWidth,
-            height: wallThickness
-        };
-
-        const walls = [
-            { rect: left, normal: { x: 1, y: 0 } },
-            { rect: right, normal: { x: -1, y: 0 } },
-            { rect: bottom, normal: { x: 0, y: -1 } }
-        ];
-
-        for (const wall of walls) {
-            if (circleRectCollision(ball, wall.rect)) {
-                bounceOffWall(ball, wall.normal);
-            }
-        }
-    }
-}
+    ball.vy += speedChange; //paātritnājums, vajag sākumā lai nebūtu, ka uzrodas, no nekurienes, extra paātrinājums
+    applyFriction();
+    ball.x += ball.vx;
+    ball.y += ball.vy;
     
 
     fillCircle(ball.x, ball.y, ball.radius, "white"); // Draw ball
@@ -329,8 +281,8 @@ document.getElementById("frictionToggle").addEventListener("click", function () 
 // Apply friction if enabled
 function applyFriction() {
     if (frictionEnabled) {
-        ball.vx *= 0.9999/steps;
-        ball.vy *= 0.9999/steps;
+        ball.vx *= 0.9999;
+        ball.vy *= 0.9999;
     }
 }
 

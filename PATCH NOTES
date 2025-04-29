@@ -3,3 +3,8 @@ V1.0.0
     - Main menu screen created, displays game version in the corner
     - Endless mode added
         -bounce the ball endlessley, test out physics, find bugs and so on
+
+V1.0.1
+    - sandbox mode created
+        - similar to endless but with tweakable settings
+        - target system is janky but k i n d a works

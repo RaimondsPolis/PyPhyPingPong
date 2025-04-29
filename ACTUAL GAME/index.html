@@ -2,6 +2,8 @@
 <html lang="en">
 
 <head>
+
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Physics Ping Pong</title>
@@ -17,11 +19,16 @@
             display: block;
         }
 
-        button {
+        .button-container {
             position: absolute;
             top: 60%;
             left: 50%;
             transform: translate(-50%, -50%);
+            display: flex;
+            gap: 20px;
+        }
+
+        button {
             padding: 10px 20px;
             font-size: 1.5rem;
             color: white;
@@ -39,9 +46,18 @@
 
 <body>
     <canvas id="myCanvas"></canvas>
-    <button onclick="startGame()">Endless mode</button>
-
+    <div class="button-container">
+        <button onclick="startEndless()">Endless mode</button>
+        <button onclick="startSandbox()">Sandbox mode</button>
+    </div>
     <script>
+
+//--------------------------------------------CURRENT GAME VERSION--------------------------------------------------
+    const currentGameVersion = "Game Version: V1.0.1";
+//--------------------------------------------CURRENT GAME VERSION--------------------------------------------------
+
+
+
         const canvas = document.getElementById("myCanvas");
         const ctx = canvas.getContext("2d");
 
@@ -119,17 +135,17 @@
                     ball.vx = -ball.vx; // Reverse horizontal velocity
                 }
                 if (ball.y < textBox.y || ball.y > textBox.y + textBox.height) {
-                    ball.vy = -ball.vy; // Reverse vertical velocity
+                    ball.vy = -ball.vy * bounceFactor; // Reverse vertical velocity
                 }
             }
         }
 
         // Update ball position and physics
         function updateBall() {
+            
             ball.vy += gravity; // Apply gravity
             ball.x += ball.vx;
             ball.y += ball.vy;
-
             // Bounce off walls
             if (ball.x + ball.radius > canvas.width) {
                 ball.x = canvas.width - ball.radius; // Prevent clipping through the right wall
@@ -141,13 +157,14 @@
             }
             if (ball.y + ball.radius >= canvas.height) {
                 ball.y = canvas.height - ball.radius; // Prevent clipping through the floor
-                ball.vy = -ball.vy; // Reverse vertical velocity
+                ball.vy = -ball.vy*bounceFactor; // Reverse vertical velocity
             }
             if (ball.y - ball.radius <= 0) {
                 ball.y = ball.radius; // Prevent clipping through the ceiling
                 ball.vy = -ball.vy; // Reverse vertical velocity
             }
-
+            
+            
             // Check for collision with text
             checkCollisionWithText();
         }
@@ -157,7 +174,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the 
             ctx.fillStyle = "white";
             ctx.font = "20px Arial";
-            ctx.fillText("Game version: V1.0.0", 100, canvas.height-5);
+            ctx.fillText(currentGameVersion, 100, canvas.height-5);
             updateBall(); // Update ball position and physics
             drawText(); // Draw the text
             drawBall(); // Draw the ball
@@ -165,9 +182,13 @@
             
         }
 
-        // Redirect to game.html
-        function startGame() {
+        //redirect to the different game modes :P
+        function startEndless() {
             window.location.href = "Endless.html";
+        }
+
+        function startSandbox() {
+            window.location.href = "Sandbox.html";
         }
 
         animate(); // Start the animation
