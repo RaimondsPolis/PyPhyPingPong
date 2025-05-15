@@ -29,10 +29,7 @@
 
         //viss kods būs šeit
     
-        //vajag: Gravitācija, enerģijas nezūdamības likums, paātrinājums, koordinātes vienādojums, ROTĒJOŠS PAMATS
-  
 
-    //i have no idea what im doing
     var ctx = myCanvas.getContext("2d");
 
 var rotationSpeed = 0; // Rotation speed (radians per frame)
@@ -63,16 +60,41 @@ function clamp(val, min, max) {
 
 function rectCircleCollision(rect, circle) {
     const local = rotatePoint(circle.x, circle.y, rect.x, rect.y, rect.angle);
-    const hw = rect.width / 2;
-    const hh = rect.height / 2;
+    const hw = rect.width / 2; // half width / pusplatums platformai
+    const hh = rect.height / 2;// half height / pusaugstums platformai
 
     const closestX = clamp(local.x, rect.x - hw, rect.x + hw);
     const closestY = clamp(local.y, rect.y - hh, rect.y + hh);
 
-    const dx = local.x - closestX;
-    const dy = local.y - closestY;
+    const dx = local.x - closestX; //difference in x
+    const dy = local.y - closestY; //difference in y
 
     return (dx * dx + dy * dy) <= (circle.radius * circle.radius);
+}
+
+function rectCircleSideCollision(rect, circle) {
+    // Transform ball position into platform's local coordinates
+    const local = rotatePoint(circle.x, circle.y, rect.x, rect.y, rect.angle);
+    const hw = rect.width / 2;
+    const hh = rect.height / 2;
+
+    // Check left side
+    if (
+        Math.abs(local.x - (rect.x - hw)) < circle.radius &&
+        local.y > rect.y - hh &&
+        local.y < rect.y + hh
+    ) {
+        return "left";
+    }
+    // Check right side
+    if (
+        Math.abs(local.x - (rect.x + hw)) < circle.radius &&
+        local.y > rect.y - hh &&
+        local.y < rect.y + hh
+    ) {
+        return "right";
+    }
+    return null;
 }
 
 function bounceOffPlatform(ball, platformAngle, bounce = 1) {
@@ -98,15 +120,49 @@ function bounceOffPlatform(ball, platformAngle, bounce = 1) {
     ball.vy = reflected.y * bounce;
 }
 
+function bounceOffSides(ball, platform) {
+    // Transform ball position into platform's local coordinates
+    const local = rotatePoint(ball.x, ball.y, platform.x, platform.y, platform.angle);
+    const hw = platform.width / 2;
+    const hh = platform.height / 2;
+
+    // Check if the ball is near the left or right side
+    if (Math.abs(local.x - (platform.x - hw)) < ball.radius && local.y > platform.y - hh && local.y < platform.y + hh) {
+        // Left side collision
+        // Reflect horizontal velocity in platform's local space
+        // Convert velocity to local space
+        const cos = Math.cos(-platform.angle);
+        const sin = Math.sin(-platform.angle);
+        const vxLocal = ball.vx * cos - ball.vy * sin;
+        const vyLocal = ball.vx * sin + ball.vy * cos;
+        // Reflect X
+        const vxLocalReflected = -vxLocal;
+        // Convert back to global space
+        ball.vx = vxLocalReflected * cos + vyLocal * sin;
+        ball.vy = -vxLocalReflected * sin + vyLocal * cos;
+    } else if (Math.abs(local.x - (platform.x + hw)) < ball.radius && local.y > platform.y - hh && local.y < platform.y + hh) {
+        // Right side collision
+        // Same as above
+        const cos = Math.cos(-platform.angle);
+        const sin = Math.sin(-platform.angle);
+        const vxLocal = ball.vx * cos - ball.vy * sin;
+        const vyLocal = ball.vx * sin + ball.vy * cos;
+        // Reflect X
+        const vxLocalReflected = -vxLocal;
+        // Convert back to global space
+        ball.vx = vxLocalReflected * cos + vyLocal * sin;
+        ball.vy = -vxLocalReflected * sin + vyLocal * cos;
+    }
+}
+
 function acceleration() {
     console.log("ir!");
     ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
 
     // Update ball position
-    ball.vy += speedChange; //paātritnājums, vajag sākumā lai nebūtu, ka uzrodas, no nekurienes, extra paātrinājums
+    ball.vy += speedChange;
     ball.x += ball.vx;
     ball.y += ball.vy;
-    
 
     fillCircle(ball.x, ball.y, ball.radius, "white"); // Draw ball
 
@@ -125,7 +181,13 @@ function acceleration() {
     // Check for collision
     if (rectCircleCollision(platform, ball)) {
         console.log("Collision detected!");
-        bounceOffPlatform(ball, platform.angle, 1); // Adjust ball velocity based on platform angle
+        // Check if it's a side collision
+        const side = rectCircleSideCollision(platform, ball);
+        if (side === "left" || side === "right") {
+            bounceOffSides(ball, platform);
+        } else {
+            bounceOffPlatform(ball, platform.angle, 1);
+        }
     }
 
     // Draw rotated platform
@@ -139,10 +201,10 @@ function acceleration() {
 
     // Ball bounce logic for screen edges
     if (ball.y + ball.radius > myCanvas.height || ball.y - ball.radius < 0) {
-        ball.vy = -ball.vy; // Reverse vertical velocity
+        ball.vy = -ball.vy;
     }
     if (ball.x + ball.radius > myCanvas.width || ball.x - ball.radius < 0) {
-        ball.vx = -ball.vx; // Reverse horizontal velocity
+        ball.vx = -ball.vx;
     }
 }
 

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <meta charset="utf-8"/>
+    <title>Physics pong - Sandbox</title>
+    <style>
+        body {
+            margin: 0; /* Remove default margin */
+            overflow: hidden; /* Prevent scrolling */
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-dark px-3 fixed-top">
+        <span class="navbar-brand mb-0 h1">Physics Pong Controls</span>
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <label class="text-white mb-0">Gravity:</label>
+          <input id="gravitySlider" type="range" class="form-range" min="0" max="0.2" step="0.01" value="0.03" style="width: 150px;">
+          <button id="frictionToggle" class="btn btn-outline-light btn-sm">Toggle Friction</button>
+          <button id="pauseToggle" class="btn btn-outline-warning btn-sm">Pause</button>
+          <button id="resetBall" class="btn btn-outline-info btn-sm">Reset Ball</button>
+          <button id="spawnTarget" class="btn btn-outline-success btn-sm">Summon Target</button>
+          <span class="text-white ms-3">Score: <span id="scoreDisplay">0</span></span>
+        </div>
+    </nav>
+    <canvas id=myCanvas width=1500 height=800 style="background-color: rgb(66, 41, 45)"> </canvas>
+    <script>
+        function resizeCanvas() {
+            myCanvas.width = window.innerWidth;
+            myCanvas.height = window.innerHeight;
+        }
+
+        // Resize canvas on load and when window resizes
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
+
+        var ctx = myCanvas.getContext("2d");
+
+        // Ball properties
+        const ball = {
+            x: 950,
+            y: 100,
+            vx: 0,
+            vy: -1,
+            radius: 30
+        };
+
+        // Platform properties
+        var rotationAngle = 0;
+        var rotationSpeed = 0;
+        var horizontalSpeed = 0;
+        var platfrom_height = 25;
+        var platform_width = 250;
+        var x = 950;
+        var y = 850;
+        var speedChange = 0.03;
+
+        // nav bar properties
+        let interval = setInterval(acceleration, 1);
+        let paused = false;
+        let target = null;
+        let score = 0;
+
+        // Target dimensions
+        const targetWidth = 100;
+        const targetHeight = 60;
+        const wallThickness = 10;
+
+        // Draw filled circle
+        function fillCircle(x, y, radius, colour) {
+            ctx.beginPath();
+            ctx.fillStyle = colour;
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Helper: rotate a point around a center by angle
+        function rotatePoint(px, py, cx, cy, angle) {
+            const dx = px - cx;
+            const dy = py - cy;
+            const cos = Math.cos(-angle);
+            const sin = Math.sin(-angle);
+            return {
+                x: dx * cos - dy * sin + cx,
+                y: dx * sin + dy * cos + cy
+            };
+        }
+
+        function clamp(val, min, max) {
+            return Math.max(min, Math.min(max, val));
+        }
+
+        // Rectangle-circle collision (for rotated rectangles)
+        function rectCircleCollision(rect, circle) {
+            const local = rotatePoint(circle.x, circle.y, rect.x, rect.y, rect.angle);
+            const hw = rect.width / 2;
+            const hh = rect.height / 2;
+
+            const closestX = clamp(local.x, rect.x - hw, rect.x + hw);
+            const closestY = clamp(local.y, rect.y - hh, rect.y + hh);
+
+            const dx = local.x - closestX;
+            const dy = local.y - closestY;
+
+            return (dx * dx + dy * dy) <= (circle.radius * circle.radius);
+        }
+
+        // Detect if the ball is colliding with the left or right side of a rotated rectangle
+        function rectCircleSideCollision(rect, circle) {
+            const local = rotatePoint(circle.x, circle.y, rect.x, rect.y, rect.angle);
+            const hw = rect.width / 2;
+            const hh = rect.height / 2;
+
+            // Left side
+            if (
+                Math.abs(local.x - (rect.x - hw)) < circle.radius &&
+                local.y > rect.y - hh &&
+                local.y < rect.y + hh
+            ) {
+                return "left";
+            }
+            // Right side
+            if (
+                Math.abs(local.x - (rect.x + hw)) < circle.radius &&
+                local.y > rect.y - hh &&
+                local.y < rect.y + hh
+            ) {
+                return "right";
+            }
+            return null;
+        }
+
+        // Bounce off the sides of a rotated rectangle
+        function bounceOffSides(ball, platform) {
+            const local = rotatePoint(ball.x, ball.y, platform.x, platform.y, platform.angle);
+            const hw = platform.width / 2;
+            const hh = platform.height / 2;
+
+            if (
+                Math.abs(local.x - (platform.x - hw)) < ball.radius &&
+                local.y > platform.y - hh &&
+                local.y < platform.y + hh
+            ) {
+                // Left side collision
+                const cos = Math.cos(-platform.angle);
+                const sin = Math.sin(-platform.angle);
+                const vxLocal = ball.vx * cos - ball.vy * sin;
+                const vyLocal = ball.vx * sin + ball.vy * cos;
+                const vxLocalReflected = -vxLocal;
+                ball.vx = vxLocalReflected * cos + vyLocal * sin;
+                ball.vy = -vxLocalReflected * sin + vyLocal * cos;
+            } else if (
+                Math.abs(local.x - (platform.x + hw)) < ball.radius &&
+                local.y > platform.y - hh &&
+                local.y < platform.y + hh
+            ) {
+                // Right side collision
+                const cos = Math.cos(-platform.angle);
+                const sin = Math.sin(-platform.angle);
+                const vxLocal = ball.vx * cos - ball.vy * sin;
+                const vyLocal = ball.vx * sin + ball.vy * cos;
+                const vxLocalReflected = -vxLocal;
+                ball.vx = vxLocalReflected * cos + vyLocal * sin;
+                ball.vy = -vxLocalReflected * sin + vyLocal * cos;
+            }
+        }
+
+        // Bounce off the top/bottom of a rotated rectangle
+        function bounceOffPlatform(ball, platformAngle, bounce = 1) {
+            const velocity = { x: ball.vx, y: ball.vy };
+            // Calculate the normal vector of the platform
+            const normal = {
+                x: Math.sin(platformAngle),
+                y: -Math.cos(platformAngle)
+            };
+            // Calculate the dot product of the velocity and the normal
+            const dot = velocity.x * normal.x + velocity.y * normal.y;
+            // Reflect the velocity vector
+            const reflected = {
+                x: velocity.x - 2 * dot * normal.x,
+                y: velocity.y - 2 * dot * normal.y
+            };
+            // Apply the bounce factor
+            ball.vx = reflected.x * bounce;
+            ball.vy = reflected.y * bounce;
+        }
+
+        // Bounce off a wall (for axis-aligned rectangles)
+        function bounceOffWall(ball, normal) {
+            const dot = ball.vx * normal.x + ball.vy * normal.y;
+            ball.vx = ball.vx - 2 * dot * normal.x;
+            ball.vy = ball.vy - 2 * dot * normal.y;
+        }
+
+        // Apply friction if enabled
+        function applyFriction() {
+            if (frictionEnabled) {
+                ball.vx *= 0.9999;
+                ball.vy *= 0.9999;
+            }
+        }
+
+        // Helper for axis-aligned rectangle-circle collision (for target walls)
+        function circleRectCollision(circle, rect) {
+            const closestX = clamp(circle.x, rect.x, rect.x + rect.width);
+            const closestY = clamp(circle.y, rect.y, rect.y + rect.height);
+
+            const dx = circle.x - closestX;
+            const dy = circle.y - closestY;
+
+            return (dx * dx + dy * dy) <= (circle.radius * circle.radius);
+        }
+
+        // Draw the U-shaped target and handle wall collisions
+        function drawTarget() {
+            if (!target) return;
+
+            ctx.fillStyle = "lime";
+
+            // Cup wall positions
+            const left = {
+                x: target.x - targetWidth / 2,
+                y: target.y - wallThickness,
+                width: wallThickness,
+                height: targetHeight
+            };
+            const right = {
+                x: target.x + targetWidth / 2 - wallThickness,
+                y: target.y - wallThickness,
+                width: wallThickness,
+                height: targetHeight
+            };
+            const bottom = {
+                x: target.x - targetWidth / 2,
+                y: target.y + targetHeight - wallThickness,
+                width: targetWidth,
+                height: wallThickness
+            };
+
+            // Draw U-shape cup
+            ctx.fillRect(left.x, left.y, left.width, left.height);
+            ctx.fillRect(right.x, right.y, right.width, right.height);
+            ctx.fillRect(bottom.x, bottom.y, bottom.width, bottom.height);
+
+            // Collision check with each wall
+            const walls = [
+                { rect: left, normal: { x: 1, y: 0 } },   // left wall
+                { rect: right, normal: { x: -1, y: 0 } }, // right wall
+                { rect: bottom, normal: { x: 0, y: -1 } } // bottom wall
+            ];
+
+            for (const wall of walls) {
+                if (circleRectCollision(ball, wall.rect)) {
+                    bounceOffWall(ball, wall.normal);
+                }
+            }
+
+            // Score detection (only once)
+            const inCupX = ball.x > target.x - targetWidth / 2 + wallThickness &&
+                        ball.x < target.x + targetWidth / 2 - wallThickness;
+            const inCupY = ball.y + ball.radius > target.y + targetHeight - wallThickness &&
+                        ball.y + ball.radius < target.y + targetHeight + 10;
+
+            if (inCupX && inCupY && !target.scored) {
+                score++;
+                document.getElementById("scoreDisplay").textContent = score;
+                target.scored = true;
+                setTimeout(() => { target = null; }, 500);
+            }
+        }
+
+        // Main game loop
+        function acceleration() {
+            ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+
+            // Update ball position
+            ball.vy += speedChange;
+            applyFriction();
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            fillCircle(ball.x, ball.y, ball.radius, "white"); // Draw ball
+
+            // Update platform position
+            x += horizontalSpeed;
+
+            // Platform properties
+            const platform = {
+                x: x,
+                y: y,
+                width: platform_width,
+                height: platfrom_height,
+                angle: rotationAngle
+            };
+
+            // Check for collision with player platform
+            if (rectCircleCollision(platform, ball)) {
+                const side = rectCircleSideCollision(platform, ball);
+                if (side === "left" || side === "right") {
+                    bounceOffSides(ball, platform);
+                } else {
+                    bounceOffPlatform(ball, platform.angle, 1);
+                }
+            }
+
+            // Draw rotated platform
+            ctx.save();
+            ctx.translate(x, y);
+            rotationAngle += rotationSpeed;
+            ctx.rotate(rotationAngle);
+            ctx.fillStyle = "white";
+            ctx.fillRect(-platform_width / 2, -platfrom_height / 2, platform_width, platfrom_height);
+            ctx.restore();
+
+            // Ball bounce logic for screen edges
+            if (ball.y + ball.radius > myCanvas.height || ball.y - ball.radius < 0) {
+                ball.vy = -ball.vy;
+            }
+            if (ball.x + ball.radius > myCanvas.width || ball.x - ball.radius < 0) {
+                ball.vx = -ball.vx;
+            }
+
+            // Draw and handle target
+            drawTarget();
+        }
+
+        // Event listeners for platform movement
+        function MovePlatform(action) {
+            if (action.keyCode == 39) {
+                horizontalSpeed = 3; // Move right
+            }
+            if (action.keyCode == 37) {
+                horizontalSpeed = -3; // Move left
+            }
+            if (action.keyCode == 40) {
+                rotationSpeed = Math.PI / 360; // Rotate clockwise
+            }
+            if (action.keyCode == 38) {
+                rotationSpeed = -Math.PI / 360; // Rotate counter-clockwise
+            }
+        }
+
+        function StopRotation(action) {
+            if (action.keyCode == 39 || action.keyCode == 37) {
+                horizontalSpeed = 0; // Stop horizontal movement
+            }
+            if (action.keyCode == 38 || action.keyCode == 40) {
+                rotationSpeed = 0; // Stop rotation
+            }
+        }
+
+        window.addEventListener("keydown", MovePlatform);
+        window.addEventListener("keyup", StopRotation);
+
+        document.getElementById("pauseToggle").addEventListener("click", function () {
+            paused = !paused;
+            if (paused) {
+                clearInterval(interval);
+                this.textContent = "Resume";
+            } else {
+                interval = setInterval(acceleration, 1);
+                this.textContent = "Pause";
+            }
+        });
+
+        document.getElementById("resetBall").addEventListener("click", function () {
+            ball.x = 950;
+            ball.y = 100;
+            ball.vx = 0;
+            ball.vy = -1;
+        });
+
+        document.getElementById("spawnTarget").addEventListener("click", function () {
+            const randX = Math.random() * (myCanvas.width - targetWidth) + targetWidth / 2;
+            const randY = Math.random() * (myCanvas.height / 2) + myCanvas.height / 2;
+            target = { x: randX, y: randY, scored: false };
+        });
+
+        // Gravity slider
+        const gravitySlider = document.getElementById("gravitySlider");
+        gravitySlider.addEventListener("input", function () {
+            speedChange = parseFloat(this.value);
+        });
+
+        // Friction toggle logic
+        let frictionEnabled = false;
+        document.getElementById("frictionToggle").addEventListener("click", function () {
+            frictionEnabled = !frictionEnabled;
+            this.textContent = frictionEnabled ? "Friction: ON" : "Friction: OFF";
+        });
+
+    </script>
+</body>
+</html>

@@ -2,13 +2,8 @@
 <html>
 
 <head>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
-
     <meta charset="utf-8"/>
-    <title>Physics pong - Sandbox</title>
+    <title>Physics pong - Endless</title>
     <style>
         body {
             margin: 0; /* Remove default margin */
@@ -20,21 +15,7 @@
 <!---------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
 <body>
-    <nav class="navbar navbar-dark bg-dark px-3 fixed-top">
-        <span class="navbar-brand mb-0 h1">Physics Pong Controls</span>
-      
-        <div class="d-flex align-items-center flex-wrap gap-2">
-          <label class="text-white mb-0">Gravity:</label>
-          <input id="gravitySlider" type="range" class="form-range" min="0" max="0.2" step="0.01" value="0.03" style="width: 150px;">
-      
-          <button id="frictionToggle" class="btn btn-outline-light btn-sm">Toggle Friction</button>
-          <button id="pauseToggle" class="btn btn-outline-warning btn-sm">Pause</button>
-          <button id="resetBall" class="btn btn-outline-info btn-sm">Reset Ball</button>
-          <button id="spawnTarget" class="btn btn-outline-success btn-sm">Summon Target</button>
-      
-          <span class="text-white ms-3">Score: <span id="scoreDisplay">0</span></span>
-        </div>
-      </nav>
+
     <canvas id=myCanvas width=1500 height= 800 style="background-color: rgb(66, 41, 45)"> </canvas>
     <script>
         function resizeCanvas() {
@@ -48,10 +29,7 @@
 
         //viss kods būs šeit
     
-        //vajag: Gravitācija, enerģijas nezūdamības likums, paātrinājums, koordinātes vienādojums, ROTĒJOŠS PAMATS
-  
 
-    //i have no idea what im doing
     var ctx = myCanvas.getContext("2d");
 
 var rotationSpeed = 0; // Rotation speed (radians per frame)
@@ -82,16 +60,41 @@ function clamp(val, min, max) {
 
 function rectCircleCollision(rect, circle) {
     const local = rotatePoint(circle.x, circle.y, rect.x, rect.y, rect.angle);
-    const hw = rect.width / 2;
-    const hh = rect.height / 2;
+    const hw = rect.width / 2; // half width / pusplatums platformai
+    const hh = rect.height / 2;// half height / pusaugstums platformai
 
     const closestX = clamp(local.x, rect.x - hw, rect.x + hw);
     const closestY = clamp(local.y, rect.y - hh, rect.y + hh);
 
-    const dx = local.x - closestX;
-    const dy = local.y - closestY;
+    const dx = local.x - closestX; //difference in x
+    const dy = local.y - closestY; //difference in y
 
     return (dx * dx + dy * dy) <= (circle.radius * circle.radius);
+}
+
+function rectCircleSideCollision(rect, circle) {
+    // Transform ball position into platform's local coordinates
+    const local = rotatePoint(circle.x, circle.y, rect.x, rect.y, rect.angle);
+    const hw = rect.width / 2;
+    const hh = rect.height / 2;
+
+    // Check left side
+    if (
+        Math.abs(local.x - (rect.x - hw)) < circle.radius &&
+        local.y > rect.y - hh &&
+        local.y < rect.y + hh
+    ) {
+        return "left";
+    }
+    // Check right side
+    if (
+        Math.abs(local.x - (rect.x + hw)) < circle.radius &&
+        local.y > rect.y - hh &&
+        local.y < rect.y + hh
+    ) {
+        return "right";
+    }
+    return null;
 }
 
 function bounceOffPlatform(ball, platformAngle, bounce = 1) {
@@ -117,73 +120,49 @@ function bounceOffPlatform(ball, platformAngle, bounce = 1) {
     ball.vy = reflected.y * bounce;
 }
 
-function bounceOffWall(ball, normal) {
-    const dot = ball.vx * normal.x + ball.vy * normal.y;
+function bounceOffSides(ball, platform) {
+    // Transform ball position into platform's local coordinates
+    const local = rotatePoint(ball.x, ball.y, platform.x, platform.y, platform.angle);
+    const hw = platform.width / 2;
+    const hh = platform.height / 2;
 
-    ball.vx = ball.vx - 2 * dot * normal.x;
-    ball.vy = ball.vy - 2 * dot * normal.y;
+    // Check if the ball is near the left or right side
+    if (Math.abs(local.x - (platform.x - hw)) < ball.radius && local.y > platform.y - hh && local.y < platform.y + hh) {
+        // Left side collision
+        // Reflect horizontal velocity in platform's local space
+        // Convert velocity to local space
+        const cos = Math.cos(-platform.angle);
+        const sin = Math.sin(-platform.angle);
+        const vxLocal = ball.vx * cos - ball.vy * sin;
+        const vyLocal = ball.vx * sin + ball.vy * cos;
+        // Reflect X
+        const vxLocalReflected = -vxLocal;
+        // Convert back to global space
+        ball.vx = vxLocalReflected * cos + vyLocal * sin;
+        ball.vy = -vxLocalReflected * sin + vyLocal * cos;
+    } else if (Math.abs(local.x - (platform.x + hw)) < ball.radius && local.y > platform.y - hh && local.y < platform.y + hh) {
+        // Right side collision
+        // Same as above
+        const cos = Math.cos(-platform.angle);
+        const sin = Math.sin(-platform.angle);
+        const vxLocal = ball.vx * cos - ball.vy * sin;
+        const vyLocal = ball.vx * sin + ball.vy * cos;
+        // Reflect X
+        const vxLocalReflected = -vxLocal;
+        // Convert back to global space
+        ball.vx = vxLocalReflected * cos + vyLocal * sin;
+        ball.vy = -vxLocalReflected * sin + vyLocal * cos;
+    }
 }
 
-
 function acceleration() {
-
     console.log("ir!");
     ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
 
     // Update ball position
-    const steps = 5;
-for (let i = 0; i < steps; i++) {
-    ball.vy += speedChange / steps;
-    applyFriction()
-    ball.x += ball.vx / steps;
-    ball.y += ball.vy / steps;
-
-    // Check collisions at each substep
-    const platform = {
-        x: x,
-        y: y,
-        width: platform_width,
-        height: platfrom_height,
-        angle: rotationAngle
-    };
-    if (rectCircleCollision(platform, ball)) {
-        bounceOffPlatform(ball, platform.angle, 1);
-    }
-
-    if (target) {
-        const left = {
-            x: target.x - targetWidth / 2,
-            y: target.y - wallThickness,
-            width: wallThickness,
-            height: targetHeight
-        };
-        const right = {
-            x: target.x + targetWidth / 2 - wallThickness,
-            y: target.y - wallThickness,
-            width: wallThickness,
-            height: targetHeight
-        };
-        const bottom = {
-            x: target.x - targetWidth / 2,
-            y: target.y + targetHeight - wallThickness,
-            width: targetWidth,
-            height: wallThickness
-        };
-
-        const walls = [
-            { rect: left, normal: { x: 1, y: 0 } },
-            { rect: right, normal: { x: -1, y: 0 } },
-            { rect: bottom, normal: { x: 0, y: -1 } }
-        ];
-
-        for (const wall of walls) {
-            if (circleRectCollision(ball, wall.rect)) {
-                bounceOffWall(ball, wall.normal);
-            }
-        }
-    }
-}
-    
+    ball.vy += speedChange;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
 
     fillCircle(ball.x, ball.y, ball.radius, "white"); // Draw ball
 
@@ -202,7 +181,13 @@ for (let i = 0; i < steps; i++) {
     // Check for collision
     if (rectCircleCollision(platform, ball)) {
         console.log("Collision detected!");
-        bounceOffPlatform(ball, platform.angle, 1); // Adjust ball velocity based on platform angle
+        // Check if it's a side collision
+        const side = rectCircleSideCollision(platform, ball);
+        if (side === "left" || side === "right") {
+            bounceOffSides(ball, platform);
+        } else {
+            bounceOffPlatform(ball, platform.angle, 1);
+        }
     }
 
     // Draw rotated platform
@@ -216,15 +201,14 @@ for (let i = 0; i < steps; i++) {
 
     // Ball bounce logic for screen edges
     if (ball.y + ball.radius > myCanvas.height || ball.y - ball.radius < 0) {
-        ball.vy = -ball.vy; // Reverse vertical velocity
+        ball.vy = -ball.vy;
     }
     if (ball.x + ball.radius > myCanvas.width || ball.x - ball.radius < 0) {
-        ball.vx = -ball.vx; // Reverse horizontal velocity
+        ball.vx = -ball.vx;
     }
-    drawTarget();
 }
 
-
+setInterval(acceleration, 1);
 
 // Ball properties
 const ball = {
@@ -244,17 +228,6 @@ var platform_width = 250;
 var x = 950;
 var y = 850;
 var speedChange = 0.03;
-
-//nav bar properties type shit
-let interval = setInterval(acceleration, 1);
-let paused = false;
-let target = null;
-let score = 0;
-
-// Target dimensions
-const targetWidth = 100;
-const targetHeight = 60;
-const wallThickness = 10;
 
 // Event listeners for platform movement
 function MovePlatform(action) {
@@ -283,127 +256,6 @@ function StopRotation(action) {
 
 window.addEventListener("keydown", MovePlatform);
 window.addEventListener("keyup", StopRotation);
-
-document.getElementById("pauseToggle").addEventListener("click", function () {
-    paused = !paused;
-    if (paused) {
-        clearInterval(interval);
-        this.textContent = "Resume";
-    } else {
-        interval = setInterval(acceleration, 1);
-        this.textContent = "Pause";
-    }
-});
-
-document.getElementById("resetBall").addEventListener("click", function () {
-    ball.x = 950;
-    ball.y = 100;
-    ball.vx = 0;
-    ball.vy = -1;
-});
-
-document.getElementById("spawnTarget").addEventListener("click", function () {
-    const randX = Math.random() * (myCanvas.width - targetWidth) + targetWidth / 2;
-    const randY = Math.random() * (myCanvas.height / 2) + myCanvas.height / 2;
-    target = { x: randX, y: randY, scored: false };
-});
-
-
-//
-//--------------------------------------------other functions below ----------------------------------------------------------------------------------------
-//
-
-//gravity slider
-const gravitySlider = document.getElementById("gravitySlider");
-gravitySlider.addEventListener("input", function () {
-    speedChange = parseFloat(this.value);
-});
-
-//Friction toggle logic
-let frictionEnabled = false;
-document.getElementById("frictionToggle").addEventListener("click", function () {
-    frictionEnabled = !frictionEnabled;
-    this.textContent = frictionEnabled ? "Friction: ON" : "Friction: OFF";
-});
-
-// Apply friction if enabled
-function applyFriction() {
-    if (frictionEnabled) {
-        ball.vx *= 0.9999/steps;
-        ball.vy *= 0.9999/steps;
-    }
-}
-
-
-function circleRectCollision(circle, rect) {//helper function for the thing when ball and target hit eachother
-    const closestX = clamp(circle.x, rect.x, rect.x + rect.width);
-    const closestY = clamp(circle.y, rect.y, rect.y + rect.height);
-
-    const dx = circle.x - closestX;
-    const dy = circle.y - closestY;
-
-    return (dx * dx + dy * dy) <= (circle.radius * circle.radius);
-}
-
-function drawTarget() {
-    if (!target) return;
-
-    ctx.fillStyle = "lime";
-
-    // Cup wall positions
-    const left = {
-        x: target.x - targetWidth / 2,
-        y: target.y - wallThickness,
-        width: wallThickness,
-        height: targetHeight
-    };
-    const right = {
-        x: target.x + targetWidth / 2 - wallThickness,
-        y: target.y - wallThickness,
-        width: wallThickness,
-        height: targetHeight
-    };
-    const bottom = {
-        x: target.x - targetWidth / 2,
-        y: target.y + targetHeight - wallThickness,
-        width: targetWidth,
-        height: wallThickness
-    };
-
-    // Draw U-shape cup
-    ctx.fillRect(left.x, left.y, left.width, left.height);
-    ctx.fillRect(right.x, right.y, right.width, right.height);
-    ctx.fillRect(bottom.x, bottom.y, bottom.width, bottom.height);
-
-    // Collision check with each wall
-    const walls = [
-        { rect: left, normal: { x: 1, y: 0 } },   // left wall
-        { rect: right, normal: { x: -1, y: 0 } }, // right wall
-        { rect: bottom, normal: { x: 0, y: -1 } } // bottom wall
-    ];
-
-    for (const wall of walls) {
-        if (circleRectCollision(ball, wall.rect)) {
-            bounceOffWall(ball, wall.normal);
-        }
-    }
-
-    // Score detection (only once)
-    const inCupX = ball.x > target.x - targetWidth / 2 + wallThickness &&
-                   ball.x < target.x + targetWidth / 2 - wallThickness;
-    const inCupY = ball.y + ball.radius > target.y + targetHeight - wallThickness &&
-                   ball.y + ball.radius < target.y + targetHeight + 10;
-
-    if (inCupX && inCupY && !target.scored) {
-        score++;
-        document.getElementById("scoreDisplay").textContent = score;
-        target.scored = true;
-        setTimeout(() => { target = null; }, 500);
-    }
-}
-
-
-
     </script>
 
 

@@ -8,3 +8,10 @@ V1.0.1
     - sandbox mode created
         - similar to endless but with tweakable settings
         - target system is janky but k i n d a works
+
+V1.0.2
+    - fixed bug where sides dont make the ball bounce. now the sides also make the ball bounce (for the most part)
+        - sometimes wierd stuff happens when ball bounces off the corner
+            - sometimes the ball clips into the platform and stays bounces inside untill clips back out again
+                - im preety sure its because of the platform rotating and moving during collision
+            
